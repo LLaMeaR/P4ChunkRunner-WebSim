@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chunking Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f8f8f8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .options {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .options label {
+      margin-right: 5px;
+    }
+
+    #resultArea {
+      margin-top: 20px;
+    }
+
+    .chunk, .shard {
+      display: inline-block;
+      padding: 6px 10px;
+      margin: 5px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .anchor {
+      background-color: #90ee90;
+      font-weight: bold;
+    }
+
+    /* 색상: shard-0 ~ shard-f */
+    .shard-0 { background: #f0f8ff; }
+    .shard-1 { background: #faebd7; }
+    .shard-2 { background: #ffe4e1; }
+    .shard-3 { background: #e6e6fa; }
+    .shard-4 { background: #fffacd; }
+    .shard-5 { background: #e0ffff; }
+    .shard-6 { background: #f5f5dc; }
+    .shard-7 { background: #f5f5f5; }
+    .shard-8 { background: #f0fff0; }
+    .shard-9 { background: #fffff0; }
+    .shard-a { background: #cce5ff; }
+    .shard-b { background: #ffeeba; }
+    .shard-c { background: #f8d7da; }
+    .shard-d { background: #d1ecf1; }
+    .shard-e { background: #d4edda; }
+    .shard-f { background: #fff3cd; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔧 Chunking Simulator</h2>
+
+    <div class="options">
+      <label>엔트리 개수:</label>
+      <input id="countInput" type="number" value="50" min="1" />
+      <button onclick="generateRandomKeys()">랜덤 키 생성</button>
+      <button onclick="appendRandomKeys()">랜덤 키 추가</button>
+      <button onclick="runAnchorCDC()">AnchorCDC 실행</button>
+      <button onclick="runSharding()">Sharding 실행</button>
+    </div>
+
+    <textarea id="keysInput">Key001\nKey002\nKey003</textarea>
+
+    <div id="resultArea"></div>
+  </div>
+
+  <script>
+    function fnv1a64(str) {
+      const FNV_OFFSET = BigInt("0xcbf29ce484222325");
+      const FNV_PRIME = BigInt("0x100000001b3");
+      let hash = FNV_OFFSET;
+      for (let i = 0; i < str.length; i++) {
+        hash ^= BigInt(str.charCodeAt(i));
+        hash = (hash * FNV_PRIME) & BigInt("0xFFFFFFFFFFFFFFFF");
+      }
+      return hash;
+    }
+
+    function pad(n) {
+      return n.toString().padStart(3, '0');
+    }
+
+    function randomKey() {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let suffix = '';
+      for (let i = 0; i < 4; i++) {
+        suffix += letters[Math.floor(Math.random() * letters.length)];
+      }
+      return 'Key' + suffix;
+    }
+
+    function generateRandomKeys() {
+      const n = parseInt(document.getElementById("countInput").value);
+      const keys = [];
+      for (let i = 0; i < n; i++) {
+        keys.push(randomKey());
+      }
+      document.getElementById("keysInput").value = keys.join("\n");
+    }
+
+    function appendRandomKeys() {
+      const n = parseInt(document.getElementById("countInput").value);
+      const textarea = document.getElementById("keysInput");
+      const existing = textarea.value.trim().split(/\r?\n/).filter(k => k.trim() !== "");
+      const newKeys = [];
+      for (let i = 0; i < n; i++) {
+        newKeys.push(randomKey());
+      }
+      textarea.value = [...existing, ...newKeys].join("\n");
+    }
+
+
+    function runAnchorCDC() {
+      const keys = document.getElementById("keysInput").value.split(/\r?\n/).filter(k => k.trim() !== "");
+      const maskBits = 4;
+      const mask = (1n << BigInt(maskBits)) - 1n;
+      const chunks = [];
+      let chunk = [];
+      for (const key of keys) {
+        const hash = fnv1a64(key);
+        chunk.push(key);
+        if ((hash & mask) === 0n) {
+          chunks.push({ keys: chunk, anchor: key });
+          chunk = [];
+        }
+      }
+      if (chunk.length > 0) chunks.push({ keys: chunk });
+
+      const out = document.getElementById("resultArea");
+      out.innerHTML = "<h3>AnchorCDC 결과</h3>";
+      chunks.forEach((c, i) => {
+        out.innerHTML += `<div><strong>Chunk ${i}:</strong> `;
+        c.keys.forEach(k => {
+          const isAnchor = k === c.anchor;
+          out.innerHTML += `<span class="chunk${isAnchor ? ' anchor' : ''}">${k}</span> `;
+        });
+        out.innerHTML += "</div>";
+      });
+    }
+
+    function runSharding() {
+      const keys = document.getElementById("keysInput").value.split(/\r?\n/).filter(k => k.trim() !== "");
+      const digit = 1;
+      const buckets = {};
+
+      for (const key of keys) {
+        const hash = fnv1a64("LocalizedStringsSystem" + key);
+        const hex = hash.toString(16).padStart(16, "0").toLowerCase();
+        const prefix = hex.substring(0, digit);
+        if (!buckets[prefix]) buckets[prefix] = [];
+        buckets[prefix].push(key);
+      }
+
+      const out = document.getElementById("resultArea");
+      out.innerHTML = "<h3>Sharding 결과</h3>";
+      Object.entries(buckets).forEach(([prefix, list]) => {
+        out.innerHTML += `<div><strong>Shard ${prefix}:</strong><br>`;
+        list.forEach(k => {
+          out.innerHTML += `<span class="shard shard-${prefix}">${k}</span> `;
+        });
+        out.innerHTML += `</div>`;
+      });
+    }
+  </script>
+</body>
+</html>
