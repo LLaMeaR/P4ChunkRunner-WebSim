@@ -10,21 +10,10 @@
   <a href="https://llamear.github.io/P4ChunkRunner-WebSim/">
     <img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-Open%20in%20Browser-2ea44f?style=for-the-badge">
   </a>
-  <a href="#-features">
-    <img alt="Features" src="https://img.shields.io/badge/AnchorCDC-Visualizer-1f6feb?style=for-the-badge">
-  </a>
   <a href="#-how-it-works">
     <img alt="How it works" src="https://img.shields.io/badge/Explanation-How%20it%20works-8250df?style=for-the-badge">
   </a>
 </p>
-
-<p align="center">
-  <a href="https://llamear.github.io/P4ChunkRunner-WebSim/">
-    <img src="docs/preview.png" alt="Preview" width="900">
-  </a>
-</p>
-
-> ℹ️ `docs/preview.png`는 예시 경로입니다. 스크린샷을 `docs/` 폴더에 추가하거나 경로를 수정하세요.
 
 ---
 
