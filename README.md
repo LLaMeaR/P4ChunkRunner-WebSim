@@ -35,8 +35,7 @@
 해시 접두사로 고정 분할하는 **Sharding**과 달리, 앵커 조건을 만족하는 지점에서만 경계를 형성하여
 
 - 불필요한 diff 확산을 줄이고,
-- 의미 단위(semantic unit)의 분절을 완화하며,
-- **Tail Append / Contiguous Delete** 시나리오에서 변경 범위를 안정적으로 국소화합니다.
+- 의미 단위(semantic unit)로 분절해 Diff 분석이 용이합니다.
 
 ---
 
@@ -57,18 +56,6 @@
 └── README.md
 ```
 
-<details>
-<summary>ASCII 버전(문자 인코딩 이슈가 있을 때 사용)</summary>
-
-```
-.
-|-- index.html     # 앱 엔트리 (UI)
-|-- main.js        # Anchor-CDC 로직 + 시각화 동작
-|-- style.css      # 레이아웃/스타일
-`-- README.md
-```
-</details>
-
 ---
 
 ## 🧩 Features
@@ -78,43 +65,6 @@
 - **해시/앵커 표시**: 키별 해시·앵커 충족 여부를 시각적으로 확인
 - **Diff 감쇠 체험**: Tail Append / Contiguous Delete에서 변경 전파 감소 확인
 - **브라우저 단일 페이지**: GitHub Pages로 간편 배포
-
----
-
-## 🧪 Try It (샘플 키)
-
-아래와 같이 붙여넣어 보세요. (한 줄에 한 키)
-
-```
-Event_001
-Event_002
-Event_003
-...
-Event_040
-```
-
-- **Tail Append**: 끝에 `Event_041 ~ Event_050` 추가  
-  → 대부분 기존 청크는 유지, 말단 일부만 재형성
-- **Contiguous Delete**: `Event_011 ~ Event_020` 삭제  
-  → 인접 청크만 영향을 받고, 전체 재분할이 일어나지 않음
-
----
-
-## 🛠️ Quick Start (Local)
-
-```bash
-# 1) Clone
-git clone https://github.com/llamear/P4ChunkRunner-WebSim.git
-cd P4ChunkRunner-WebSim
-
-# 2) Run locally
-#  - 방법 A: index.html을 브라우저로 더블클릭
-#  - 방법 B: 간단 서버 (Python 예시)
-python -m http.server 8080
-# open http://localhost:8080
-```
-
-> GitHub Pages는 정적 호스팅이므로 별도 빌드가 필요 없습니다.
 
 ---
 
